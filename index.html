@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SecondRateAudioTools</title>
     <link rel="stylesheet" type="text/css" href="css/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="css/github.css">
 
+    <script  src="js/highlight.pack.js"></script>
     <script  src="js/inadequateVisualizer.min.js"></script>
     <script  src="js/tolerableKeyboard.min.js"></script>
     <script  src="js/substandardSynth.min.js"></script>
@@ -37,6 +39,71 @@
       <div id="volumeID"></div>
       <div id="freqID"></div>
       <div id="scopeID"></div>
+
+      <h2>SOURCE</h2>
+
+      <h3>js</h3>
+      <pre><code class="js">
+          //create a common context to be used by the synth, keyboard and visualizers
+          let context = new AudioContext;
+          let mixNode = context.createGain();
+          mixNode.connect(context.destination)
+
+          //helper function to create keyboard, and plug it to the synth play/release note
+          function setUpKeyboard(name,source,div){
+            name = new TolerableKeyboard({
+                      divID: div, 
+                      octaves:5,
+                      width:1200,
+                      showKey:true, 
+                      autoSetUp:false, 
+                      firstNote:'C1'
+                 })
+
+            name.pressNote = function(frequency){
+              source.playNote(frequency,0)
+            }
+            name.releaseNote = function(frequency){
+              source.stopNote(frequency,0)
+            }
+            //we could add some keyBindings like this:
+            //name.addKeyBinding('Z','F#2')
+          }
+
+          //Helper function to create visualizers and connect them to the mix node
+          function setUpVisualizers(context,mixNode){
+            let visualizerVolume = new InadequateVisualizer({context:context,divID:'volumeID',type:'Volume'})
+            visualizerVolume.connectAndDraw(mixNode)
+            let visualizerFreq = new InadequateVisualizer({context:context,divID:'freqID',type:'Frequency'})
+            visualizerFreq.connectAndDraw(mixNode)
+            let visualizerScope = new InadequateVisualizer({context:context,divID:'scopeID',type:'Oscilloscope'})
+            visualizerScope.connectAndDraw(mixNode)
+          }
+
+          //Create the synth, then connect the keyboard and visualizers
+          document.addEventListener('DOMContentLoaded', function(){ 
+            // Create a synth with a few basic options
+            let synth = new SubstandardSynth({
+              context:context,
+              outNode:mixNode,
+              export:true,
+              pageRoot:'https://atactionpark.github.io/SecondRateAudioTools/',
+              ID:'synth',
+              voices:8
+            });
+            setUpKeyboard(keyboard,synth,'keyboard');
+            setUpVisualizers(context,mixNode);
+          }, false);
+        </pre></code>
+        <h3>html</h3>
+        <pre><code class="html">
+          &lt;div id='synth'>&lt;/div>
+          &lt;div id="keyboard">&lt;/div>
+          &lt;div id="volumeID">&lt;/div>
+          &lt;div id="freqID">&lt;/div>
+          &lt;div id="scopeID">&lt;/div>
+        </pre></code>
+
     </div>
   </body>
 </html>
